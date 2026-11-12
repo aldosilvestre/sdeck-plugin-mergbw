@@ -1,12 +1,15 @@
-# MeRGBW Hexagon Light demo extension
+# sdeck-plugin-mergbw
 
-A demonstration plugin for sdeck-plus (protocol v1, Python 3 standard library only) that writes
-MeRGBW-style packets to a Bluetooth LED hexagon light.
+A MeRGBW Hexagon Light plugin for [sdeck-plus](../sdeck-plus) (protocol v1, Python 3 standard
+library only) that writes MeRGBW-style packets to a Bluetooth LED hexagon light.
 
-> **The protocol is taken from the reference implementation and is UNVERIFIED on a Hexagon Light
-> TG609.** Nothing proves the TG609 speaks it, and the developer ran **no hardware test**. The
-> tests use a fake `busctl` only. Success messages say packets were *written*; the light's state
-> is never confirmed (the reference never reads notifications, and neither does this plugin).
+> **The protocol is taken from the reference implementation.** Hand test on one Hexagon Light
+> TG609 (2026-11-12): `power-off` turned the light off, which is the only effect that was observed.
+> The other actions' packets were accepted by the light, but their visual effect was not reported,
+> and the reconnect retry below was added after a rejection seen on that device and has not been
+> re-tested live. The automated tests use a fake `busctl` only. Success messages say packets were
+> *written*; the light's state is never confirmed (the reference never reads notifications, and
+> neither does this plugin).
 
 ## Credit
 
@@ -29,12 +32,20 @@ dial press.
 
 Percentages are sent as value x 10.
 
-## Requirements
+## Dependencies
 
-- BlueZ with the system `busctl` (systemd). No Bluetooth library is used.
-- The light must already be **known to BlueZ**, for example paired with `bluetoothctl`. The plugin
-  never scans, pairs, trusts, removes or disconnects anything.
-- The official MeRGBW app must be closed: the light accepts one connection at a time.
+The app shows these in the plugin's sidebar item and flags missing required commands. It never
+installs anything for you.
+
+| Kind | Name | Needed for | Notes |
+|---|---|---|---|
+| command | `python3` | everything | 3 (tested with 3.14); standard library only |
+| command | `busctl` | everything | systemd's D-Bus client; talks to BlueZ |
+| service | BlueZ (bluetoothd) | everything | system D-Bus |
+| service | Bluetooth adapter | everything | powered, managed by BlueZ |
+| service | Hexagon Light known to BlueZ | everything | paired or discovered with `bluetoothctl`; never scanned or paired by the plugin |
+
+Also: the official MeRGBW app must be closed, because the light accepts one connection at a time.
 
 ## Limits
 
@@ -55,7 +66,7 @@ Percentages are sent as value x 10.
 
 ## Install
 
-Copy this folder to `<data dir>/sdeck-plus/plugins/mergbw/` (usually
+Copy `manifest.json` and `run` to `<data dir>/sdeck-plus/plugins/mergbw/` (usually
 `~/.local/share/sdeck-plus/plugins/mergbw/`), keep `run` executable, rescan plugins and enable
 **MeRGBW Hexagon Light**. Process separation is **not** sandboxing: the plugin runs with your
 privileges, so read `run` before enabling it.
@@ -63,5 +74,23 @@ privileges, so read `run` before enabling it.
 ## Tests
 
 ```sh
-python3 -B -I -m unittest discover -s extensions/mergbw/tests -v
+python3 -B -I -m unittest discover -s tests -v
 ```
+
+## Compatibility
+
+- Plugin protocol: **1**. The `requirements` list in `manifest.json` needs an sdeck-plus build
+  that knows that field (older builds reject unknown manifest fields). Without it, delete the
+  `requirements` array: the plugin does not need it to run.
+- Only `manifest.json` and `run` are needed at runtime; the `tests/` folder is for development.
+
+## Validate
+
+From an sdeck-plus checkout, validate this project without running it:
+
+```sh
+cargo run --offline --example plugin_validate -- /path/to/sdeck-plugin-mergbw
+```
+
+It prints `PLUGIN_VALIDATE_OK:` with the actions and a PATH check of the commands above. The
+check only looks for the commands; the app never installs anything.

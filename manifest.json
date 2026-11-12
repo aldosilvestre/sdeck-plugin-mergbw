@@ -1,9 +1,16 @@
 {
   "id": "mergbw",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "protocol_version": 1,
   "name": "MeRGBW Hexagon Light",
   "executable": "run",
+  "requirements": [
+    {"kind": "command", "name": "python3", "version": "3 (tested with 3.14)", "description": "Runs the plugin; standard library only, no pip packages"},
+    {"kind": "command", "name": "busctl", "description": "System D-Bus client from systemd; the plugin talks to BlueZ through it"},
+    {"kind": "service", "name": "BlueZ (bluetoothd)", "description": "The Linux Bluetooth stack, reachable on the system D-Bus"},
+    {"kind": "service", "name": "Bluetooth adapter", "description": "A powered adapter managed by BlueZ"},
+    {"kind": "service", "name": "Hexagon Light known to BlueZ", "description": "Already paired or discovered with bluetoothctl; the plugin never scans or pairs"}
+  ],
   "actions": [
     {
       "id": "power-on",
